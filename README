@@ -1,0 +1,11 @@
+wm - window manager
+-------------------
+wm is an ultra-simple tiling window manager
+
+requirements
+------------
+in order to build you need lib xcb
+
+installation
+------------
+do not install me, this is still a work in progress
