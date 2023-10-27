@@ -13,6 +13,10 @@ $(BIN): $(OBJ)
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
+install: $(BIN)
+	mkdir -p $(DESTDIR)$(PREFIX)/bin/
+	cp -f $(BIN) $(DESTDIR)$(PREFIX)/bin/
+
 clean:
 	rm -f $(BIN) $(OBJ)
 
