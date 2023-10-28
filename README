@@ -1,11 +1,25 @@
 wm - window manager
 -------------------
-wm is an ultra-simple tiling window manager
+wm is a tiling window manager
+
+features
+--------
+- one workspace
+- one layout
+- one screen
 
 requirements
 ------------
-in order to build you need lib xcb
+- xcb
+- xcb-util
+- xcb-util-cursor
 
 installation
 ------------
-do not install me, this is still a work in progress
+- edit config.mk
+- sudo make clean install
+
+todo
+----
+- workspaces
+- dpi scaling
