@@ -15,6 +15,7 @@ void window_resize(xcb_window_t, int16_t, int16_t);
 void window_move_resize(xcb_window_t, int16_t, int16_t, int16_t, int16_t);
 void window_border_width(xcb_window_t, uint32_t);
 void window_border_color(xcb_window_t, uint32_t);
+void window_sloppy_focus(xcb_window_t);
 
 typedef struct {
 	xcb_window_t *list;

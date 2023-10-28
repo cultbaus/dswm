@@ -1,10 +1,11 @@
 #ifndef WM_WORKSPACE_H
 #define WM_WORKSPACE_H
 
-#include "config.h"
 #include "window.h"
 
 #include <xcb/xcb.h>
+
+#define MAX_WORKSPACES 10
 
 typedef struct {
 	xcb_window_t primary;

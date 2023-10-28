@@ -1,4 +1,4 @@
-BIN     = window_manager
+BIN     = wm
 
 PREFIX  = /usr
 

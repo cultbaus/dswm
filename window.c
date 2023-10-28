@@ -47,6 +47,12 @@ void window_border_color(xcb_window_t win, uint32_t color)
 	xcb_change_window_attributes(conn, win, XCB_CW_BORDER_PIXEL, values);
 }
 
+void window_sloppy_focus(xcb_window_t win)
+{
+	uint32_t values[] = { CLIENT_MASK | XCB_EVENT_MASK_ENTER_WINDOW };
+	xcb_change_window_attributes(conn, win, XCB_CW_EVENT_MASK, values);
+}
+
 void setup_windows(windows_t *windows)
 {
 	windows->list = NULL;
