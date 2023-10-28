@@ -7,13 +7,13 @@
 #include <xcb/xcb.h>
 
 typedef struct {
-    xcb_window_t primary;
-    windows_t subsidiaries;
+	xcb_window_t primary;
+	windows_t subsidiaries;
 } space_t;
 
 typedef struct {
-    space_t workspaces[MAX_WORKSPACES];
-    size_t current;
+	space_t workspaces[MAX_WORKSPACES];
+	size_t current;
 } workspace_t;
 
 void setup_ws(workspace_t *);

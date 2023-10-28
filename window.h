@@ -6,8 +6,8 @@
 
 #define XCB_CONFIG_X_Y (XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y)
 #define XCB_CONFIG_W_H (XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT)
-#define XCB_CONFIG_X_Y_W_H                                                                                             \
-    (XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT)
+#define XCB_CONFIG_X_Y_W_H \
+	(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT)
 
 int window_exists(xcb_window_t);
 void window_move(xcb_window_t, int16_t, int16_t);
@@ -17,9 +17,9 @@ void window_border_width(xcb_window_t, uint32_t);
 void window_border_color(xcb_window_t, uint32_t);
 
 typedef struct {
-    xcb_window_t *list;
-    size_t size;
-    size_t capacity;
+	xcb_window_t *list;
+	size_t size;
+	size_t capacity;
 } windows_t;
 
 void setup_windows(windows_t *);
