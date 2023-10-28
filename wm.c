@@ -74,17 +74,26 @@ int main(void)
 
             modify_event_mask(cn->window, win_m);
 
-            add_to_workspace(&workspace, cn->window);
-
             xcb_flush(conn);
-            break;
+            log_message("CREATE: Subsidiary size: %zu\n", workspace.subsidiaries.size);
         }
         case XCB_MAP_REQUEST: {
             xcb_map_request_event_t *mr = (xcb_map_request_event_t *)event;
 
+            add_to_workspace(&workspace, mr->window);
             xcb_map_window(conn, mr->window);
 
             xcb_flush(conn);
+            log_message("MAP: Subsidiary size: %zu\n", workspace.subsidiaries.size);
+            break;
+        }
+        case XCB_DESTROY_NOTIFY: {
+            xcb_destroy_notify_event_t *dn = (xcb_destroy_notify_event_t *)event;
+
+            remove_from_workspace(&workspace, dn->window);
+
+            xcb_flush(conn);
+            log_message("DESTROY: Subsidiary size: %zu\n", workspace.subsidiaries.size);
             break;
         }
         case XCB_ENTER_NOTIFY: {
@@ -100,7 +109,6 @@ int main(void)
         }
         free(event);
     }
-
     free_workspace(&workspace);
 
     stop_xcb(&conn);
