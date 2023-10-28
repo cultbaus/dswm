@@ -3,9 +3,22 @@
 #include "config.h"
 
 #include <err.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <xcb/xproto.h>
+
+void log_message(const char *format, ...)
+{
+    FILE *logfile = fopen("log", "a");
+
+    va_list args;
+    va_start(args, format);
+    vfprintf(logfile, format, args);
+    va_end(args);
+    fclose(logfile);
+}
 
 void initialize_windows(Windows *windows)
 {
@@ -21,8 +34,21 @@ void free_windows(Windows *windows)
     windows->size = windows->capacity = 0;
 }
 
+int window_exists(Windows *windows, xcb_window_t window)
+{
+    for (size_t i = 0; i < windows->size; i++) {
+        if (windows->data[i] == window) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void add_window(Windows *windows, xcb_window_t window)
 {
+    if (window_exists(windows, window)) {
+        return;
+    }
     if (windows->size == windows->capacity) {
         windows->capacity = windows->capacity == 0 ? 1 : windows->capacity * 2;
         windows->data = realloc(windows->data, windows->capacity * sizeof(xcb_window_t));
@@ -38,6 +64,16 @@ void remove_window_at(Windows *windows, size_t index)
         memmove(&windows->data[index], &windows->data[index + 1], (windows->size - index - 1) * sizeof(xcb_window_t));
     }
     windows->size--;
+}
+
+void remove_window(Windows *windows, xcb_window_t window)
+{
+    for (size_t i = 0; i < windows->size; i++) {
+        if (windows->data[i] == window) {
+            remove_window_at(windows, i);
+            return;
+        }
+    }
 }
 
 void initialize_workspace(Workspace *workspace, xcb_connection_t *conn, xcb_screen_t *screen)
@@ -62,21 +98,21 @@ void add_to_workspace(Workspace *workspace, xcb_window_t window)
     }
 }
 
-void promote_subsidiary(Workspace *workspace, xcb_window_t window)
+void remove_from_workspace(Workspace *workspace, xcb_window_t window)
 {
     if (workspace->primary == window) {
+        promote_subsidiary(workspace);
+    }
+    remove_window(&workspace->subsidiaries, window);
+}
+
+void promote_subsidiary(Workspace *workspace)
+{
+    if (workspace->subsidiaries.size == 0) {
         return;
     }
-    if (workspace->primary != XCB_NONE) {
-        add_window(&workspace->subsidiaries, workspace->primary);
-    }
-    for (size_t i = 0; i < workspace->subsidiaries.size; i++) {
-        if (workspace->subsidiaries.data[i] == window) {
-            remove_window_at(&workspace->subsidiaries, i);
-            break;
-        }
-    }
-    workspace->primary = window;
+    workspace->primary = workspace->subsidiaries.data[0];
+    remove_window_at(&workspace->subsidiaries, 0);
 }
 
 void resize_window(xcb_connection_t *conn, xcb_window_t window, int x, int y, int w, int h)
