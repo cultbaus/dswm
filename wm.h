@@ -3,10 +3,13 @@
 
 #include <xcb/xcb.h>
 
-void start_xcb(xcb_connection_t **);
-void stop_xcb(xcb_connection_t **);
+#define ROOT_MASK                                                                                                      \
+    (XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_STRUCTURE_NOTIFY       \
+     | XCB_EVENT_MASK_FOCUS_CHANGE)
+#define CLIENT_MASK (XCB_EVENT_MASK_PROPERTY_CHANGE | XCB_EVENT_MASK_FOCUS_CHANGE)
 
-void get_screen(xcb_connection_t *, xcb_screen_t **);
-void modify_event_mask(xcb_window_t, uint32_t);
+extern xcb_connection_t *conn;
+extern xcb_screen_t *screen;
+extern xcb_window_t root;
 
 #endif
