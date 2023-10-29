@@ -16,6 +16,7 @@ void window_move_resize(xcb_window_t, int16_t, int16_t, int16_t, int16_t);
 void window_border_width(xcb_window_t, uint32_t);
 void window_border_color(xcb_window_t, uint32_t);
 void window_sloppy_focus(xcb_window_t);
+void window_kill();
 
 typedef struct {
 	xcb_window_t *list;
@@ -27,5 +28,8 @@ void setup_windows(windows_t *);
 void free_windows(windows_t *);
 void remove_from_windows(windows_t *, xcb_window_t);
 void add_to_windows(windows_t *, xcb_window_t);
+
+extern xcb_connection_t *conn;
+extern xcb_screen_t *screen;
 
 #endif

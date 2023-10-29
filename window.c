@@ -53,6 +53,18 @@ void window_sloppy_focus(xcb_window_t win)
 	xcb_change_window_attributes(conn, win, XCB_CW_EVENT_MASK, values);
 }
 
+void window_kill()
+{
+	xcb_get_input_focus_cookie_t cookie = xcb_get_input_focus(conn);
+	xcb_get_input_focus_reply_t *reply = xcb_get_input_focus_reply(conn, cookie, NULL);
+
+	if (reply) {
+		xcb_unmap_window(conn, reply->focus);
+		xcb_destroy_window(conn, reply->focus);
+		xcb_flush(conn);
+	}
+}
+
 void setup_windows(windows_t *windows)
 {
 	windows->list = NULL;

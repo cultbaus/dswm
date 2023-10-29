@@ -1,4 +1,5 @@
 #include "util.h"
+#include "key.h"
 #include "window.h"
 #include "wm.h"
 #include "workspace.h"
@@ -12,7 +13,6 @@ static void map_request(xcb_generic_event_t *gevent)
 	xcb_map_request_event_t *e = (xcb_map_request_event_t *)gevent;
 	map_ws(current_s(&workspace), e->window);
 	xcb_flush(conn);
-	log_message("MAP_REQUEST:\t%d\n", current_s(&workspace)->subsidiaries.size);
 }
 
 static void destroy_notify(xcb_generic_event_t *gevent)
@@ -44,7 +44,7 @@ static void enter_notify(xcb_generic_event_t *gevent)
 static void key_press(xcb_generic_event_t *gevent)
 {
 	xcb_key_press_event_t *e = (xcb_key_press_event_t *)gevent;
-	log_message("KEY_PRESS: detail: %u, state: %u", e->detail, e->state);
+	handle_key(e->state, e->detail);
 }
 
 void handle_event(xcb_generic_event_t *event)

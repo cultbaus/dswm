@@ -14,7 +14,7 @@ typedef struct {
 
 typedef struct {
 	space_t spaces[MAX_WORKSPACES];
-	size_t current;
+	int current;
 } workspace_t;
 
 void setup_ws(workspace_t *);
@@ -26,7 +26,8 @@ void map_ws(space_t *, xcb_window_t);
 void unmap_ws(space_t *, xcb_window_t);
 
 space_t *current_s(workspace_t *);
-void switch_ws(workspace_t *);
+void switch_ws(workspace_t *, int);
+void send_ws(workspace_t *, int);
 
 extern workspace_t workspace;
 extern xcb_screen_t *screen;

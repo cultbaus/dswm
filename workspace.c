@@ -27,6 +27,7 @@ static void unmap_s(space_t *s)
 	for (size_t i = 0; i < s->subsidiaries.size; i++) {
 		xcb_unmap_window(conn, s->subsidiaries.list[i]);
 	}
+	xcb_flush(conn);
 }
 
 static void map_s(space_t *s)
@@ -37,6 +38,7 @@ static void map_s(space_t *s)
 	for (size_t i = 0; i < s->subsidiaries.size; i++) {
 		xcb_map_window(conn, s->subsidiaries.list[i]);
 	}
+	xcb_flush(conn);
 }
 
 space_t *current_s(workspace_t *ws)
@@ -44,8 +46,11 @@ space_t *current_s(workspace_t *ws)
 	return &ws->spaces[ws->current];
 }
 
-void switch_workspace(workspace_t *ws, size_t i)
+void switch_ws(workspace_t *ws, int i)
 {
+	if (ws->current == i) {
+		return;
+	}
 	space_t *prev = current_s(ws);
 	unmap_s(prev);
 
@@ -54,32 +59,46 @@ void switch_workspace(workspace_t *ws, size_t i)
 	map_s(next);
 }
 
+void send_ws(workspace_t *ws, int i)
+{
+	xcb_get_input_focus_cookie_t cookie = xcb_get_input_focus(conn);
+	xcb_get_input_focus_reply_t *reply = xcb_get_input_focus_reply(conn, cookie, NULL);
+
+	if (reply) {
+		xcb_unmap_window(conn, reply->focus);
+		xcb_flush(conn);
+
+		space_t *next = &ws->spaces[i];
+		add_to_ws(next, reply->focus);
+
+		remove_from_ws(current_s(ws), reply->focus);
+	}
+}
+
 static void arrange(space_t *s)
 {
 	uint32_t c_gap = gap_size - (2 * border_size);
 
 	uint32_t f_width = screen->width_in_pixels;
+	uint32_t h_width = f_width / 2;
 
 	uint32_t gf_width = screen->width_in_pixels - (c_gap * 2);
 	uint32_t gf_height = screen->height_in_pixels - (c_gap * 2);
-
-	uint32_t h_width = f_width / 2;
 
 	if (s->primary != XCB_NONE && s->subsidiaries.size >= 1) {
 		uint32_t p_width = h_width - (c_gap * 3) / 2;
 		uint32_t s_x_offset = (c_gap * 2) + p_width;
 
-		window_resize(s->primary, p_width, gf_height);
-
 		uint32_t s_height = (gf_height - (s->subsidiaries.size - 1) * gap_size) / s->subsidiaries.size;
 		uint32_t y = c_gap;
+
+		window_move_resize(s->primary, c_gap, c_gap, p_width, gf_height);
 
 		for (size_t i = 0; i < s->subsidiaries.size; i++) {
 			window_move_resize(s->subsidiaries.list[i], s_x_offset, y, p_width, s_height);
 			y += s_height + gap_size;
 		}
 	}
-
 	if (s->primary != XCB_NONE && s->subsidiaries.size == 0) {
 		window_move_resize(s->primary, c_gap, c_gap, gf_width, gf_height);
 	}
@@ -87,7 +106,7 @@ static void arrange(space_t *s)
 
 void setup_ws(workspace_t *ws)
 {
-	ws->current = 0;
+	ws->current = default_workspace;
 	for (size_t i = 0; i < MAX_WORKSPACES; i++) {
 		setup_space(&ws->spaces[i]);
 	}
@@ -129,6 +148,7 @@ void map_ws(space_t *s, xcb_window_t win)
 {
 	window_border_width(win, border_size);
 	window_border_color(win, border_color);
+
 	window_sloppy_focus(win);
 	xcb_flush(conn);
 

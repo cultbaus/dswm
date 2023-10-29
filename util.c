@@ -4,7 +4,6 @@
 void log_message(const char *format, ...)
 {
 	FILE *logfile = fopen("log", "a");
-
 	va_list args;
 	va_start(args, format);
 	vfprintf(logfile, format, args);
