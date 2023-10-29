@@ -1,7 +1,7 @@
-#ifndef WM_CONFIG_H__
-#define WM_CONFIG_H__
+#ifndef WM_CONFIG_H
+#define WM_CONFIG_H
 
-#include <xcb/xcb.h>
+#include <stdint.h>
 
 #define SCALE_FACTOR 1
 

@@ -16,7 +16,6 @@
 xcb_connection_t *conn;
 xcb_screen_t *screen;
 xcb_window_t root;
-
 workspace_t workspace;
 
 static void start_xcb(xcb_connection_t **conn)
