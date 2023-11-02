@@ -1,165 +1,137 @@
 #include "workspace.h"
 
-#include "config.h"
-#include "util.h"
-#include "window.h"
-
-#include "wm.h"
 #include <stdlib.h>
-#include <xcb/xcb.h>
 
-static void setup_space(space_t *space)
+// clang-format off
+static unsigned int workspace_contains_primary(Workspace *);
+static unsigned int workspace_should_resize_primary(Workspace *);
+static unsigned int workspace_should_reposition_primary(Workspace *);
+static void         workspace_resize_primary(Workspace *);
+static unsigned int workspace_contains_secondaries(Workspace *);
+static void         workspace_resize_secondaries(Workspace *);
+// clang-format on
+
+void
+workspace_initialize(Workspace *ws)
 {
-	space->primary = XCB_NONE;
-	setup_windows(&space->subsidiaries);
+  ws->focus = -1;
+  ws->windows = malloc(sizeof(List));
+  list_initialize(ws->windows);
 }
 
-static void free_space(space_t *space)
+void
+workspace_destroy(Workspace *ws)
 {
-	free_windows(&space->subsidiaries);
+  list_destroy(ws->windows);
+  free(ws->windows);
 }
 
-static void unmap_s(space_t *s)
+void
+workspace_add(Workspace *ws, unsigned int win)
 {
-	if (s->primary != XCB_NONE) {
-		xcb_unmap_window(conn, s->primary);
-	}
-	for (size_t i = 0; i < s->subsidiaries.size; i++) {
-		xcb_unmap_window(conn, s->subsidiaries.list[i]);
-	}
-	xcb_flush(conn);
+  list_add(ws->windows, win);
+
+  if (workspace_should_resize_primary(ws))
+    workspace_resize_primary(ws);
+
+  workspace_resize_secondaries(ws);
 }
 
-static void map_s(space_t *s)
+void
+workspace_remove(Workspace *ws, unsigned int win)
 {
-	if (s->primary != XCB_NONE) {
-		xcb_map_window(conn, s->primary);
-	}
-	for (size_t i = 0; i < s->subsidiaries.size; i++) {
-		xcb_map_window(conn, s->subsidiaries.list[i]);
-	}
-	xcb_flush(conn);
+  list_remove(ws->windows, win);
+
+  if (workspace_should_resize_primary(ws))
+    workspace_resize_primary(ws);
+
+  workspace_resize_secondaries(ws);
 }
 
-space_t *current_s(workspace_t *ws)
+void
+workspace_map_all(Workspace *ws)
 {
-	return &ws->spaces[ws->current];
+  for (unsigned int i = 0; i < ws->windows->size; i++)
+    xcb_map_window(conn, ws->windows->data[i]);
+
+  xcb_flush(conn);
 }
 
-void switch_ws(workspace_t *ws, int i)
+void
+workspace_unmap_all(Workspace *ws)
 {
-	if (ws->current == i) {
-		return;
-	}
-	space_t *prev = current_s(ws);
-	unmap_s(prev);
+  for (unsigned int i = 0; i < ws->windows->size; i++)
+    xcb_unmap_window(conn, ws->windows->data[i]);
 
-	ws->current = i;
-	space_t *next = current_s(ws);
-	map_s(next);
+  xcb_flush(conn);
 }
 
-void send_ws(workspace_t *ws, int i)
+static unsigned int
+workspace_contains_primary(Workspace *ws)
 {
-	xcb_get_input_focus_cookie_t cookie = xcb_get_input_focus(conn);
-	xcb_get_input_focus_reply_t *reply = xcb_get_input_focus_reply(conn, cookie, NULL);
-
-	if (reply) {
-		xcb_unmap_window(conn, reply->focus);
-		xcb_flush(conn);
-
-		space_t *next = &ws->spaces[i];
-		add_to_ws(next, reply->focus);
-
-		remove_from_ws(current_s(ws), reply->focus);
-	}
+  return ws->windows->size > 0;
 }
 
-static void arrange(space_t *s)
+static void
+workspace_resize_primary(Workspace *ws)
 {
-	uint32_t c_gap = gap_size - (2 * border_size);
+  if (!workspace_contains_primary(ws))
+    return;
 
-	uint32_t f_width = screen->width_in_pixels;
-	uint32_t h_width = f_width / 2;
+  if (workspace_should_reposition_primary(ws))
+    window_move(ws->windows->data[0], GAP_SIZE, GAP_SIZE);
 
-	uint32_t gf_width = screen->width_in_pixels - (c_gap * 2);
-	uint32_t gf_height = screen->height_in_pixels - (c_gap * 2);
-
-	if (s->primary != XCB_NONE && s->subsidiaries.size >= 1) {
-		uint32_t p_width = h_width - (c_gap * 3) / 2;
-		uint32_t s_x_offset = (c_gap * 2) + p_width;
-
-		uint32_t s_height = (gf_height - (s->subsidiaries.size - 1) * gap_size) / s->subsidiaries.size;
-		uint32_t y = c_gap;
-
-		window_move_resize(s->primary, c_gap, c_gap, p_width, gf_height);
-
-		for (size_t i = 0; i < s->subsidiaries.size; i++) {
-			window_move_resize(s->subsidiaries.list[i], s_x_offset, y, p_width, s_height);
-			y += s_height + gap_size;
-		}
-	}
-	if (s->primary != XCB_NONE && s->subsidiaries.size == 0) {
-		window_move_resize(s->primary, c_gap, c_gap, gf_width, gf_height);
-	}
+  if (ws->windows->size == 1)
+    window_resize(ws->windows->data[0], screen->width_in_pixels - (GAP_SIZE * 2), screen->height_in_pixels - (GAP_SIZE * 2));
+  else
+    window_resize(ws->windows->data[0], screen->width_in_pixels / 2 - (GAP_SIZE * 3) / 2, screen->height_in_pixels - (GAP_SIZE * 2));
 }
 
-void setup_ws(workspace_t *ws)
+static unsigned int
+workspace_should_resize_primary(Workspace *ws)
 {
-	ws->current = default_workspace;
-	for (size_t i = 0; i < MAX_WORKSPACES; i++) {
-		setup_space(&ws->spaces[i]);
-	}
+  return ws->windows->size <= 2 && ws->windows->size >= 1 ? 1 : 0;
 }
 
-void free_ws(workspace_t *wss)
+static unsigned int
+workspace_should_reposition_primary(Workspace *ws)
 {
-	for (size_t i = 0; i < MAX_WORKSPACES; i++) {
-		free_space(&wss->spaces[i]);
-	}
+  xcb_get_geometry_reply_t *reply = window_get_geometry(ws->windows->data[0]);
+
+  unsigned int should = reply->x != GAP_SIZE || reply->y != GAP_SIZE ? 1 : 0;
+  free(reply);
+
+  return should;
 }
 
-void add_to_ws(space_t *s, xcb_window_t window)
+static unsigned int
+workspace_contains_secondaries(Workspace *ws)
 {
-	if (s->primary == XCB_NONE) {
-		s->primary = window;
-		return;
-	}
-	if (s->primary != window) {
-		add_to_windows(&s->subsidiaries, window);
-	}
+  return ws->windows->size > 1 ? 1 : 0;
 }
 
-void remove_from_ws(space_t *s, xcb_window_t window)
+static void
+workspace_resize_secondaries(Workspace *ws)
 {
-	if (s->primary == window) {
-		if (s->subsidiaries.size > 0) {
-			s->primary = s->subsidiaries.list[0];
-			remove_from_windows(&s->subsidiaries, s->subsidiaries.list[0]);
-		} else {
-			s->primary = XCB_NONE;
-		}
-		return;
-	}
-	remove_from_windows(&s->subsidiaries, window);
-}
+  if (!workspace_contains_secondaries(ws))
+    return;
 
-void map_ws(space_t *s, xcb_window_t win)
-{
-	window_border_width(win, border_size);
-	window_border_color(win, border_color);
+  uint16_t const half_screen_width = screen->width_in_pixels / 2;
+  uint16_t const half_gap_size = GAP_SIZE * 3 / 2;
+  uint16_t const window_width = half_screen_width - half_gap_size;
+  uint16_t const total_gap_height = (ws->windows->size - 2) * GAP_SIZE;
+  uint16_t const usable_height = screen->height_in_pixels - (GAP_SIZE * 2);
+  uint16_t const window_height = (usable_height - total_gap_height) / (ws->windows->size - 1);
 
-	window_sloppy_focus(win);
-	xcb_flush(conn);
+  uint16_t y_offset = GAP_SIZE;
 
-	add_to_ws(s, win);
-	arrange(s);
-	xcb_map_window(conn, win);
-}
+  for (unsigned int i = 1; i < ws->windows->size; i++)
+  {
+    uint16_t x_position = (GAP_SIZE * 3 / 2) + (half_screen_width - half_gap_size / 2);
 
-void unmap_ws(space_t *s, xcb_window_t win)
-{
-	remove_from_ws(s, win);
-	arrange(s);
-	xcb_unmap_window(conn, win);
+    window_move(ws->windows->data[i], x_position, y_offset);
+    window_resize(ws->windows->data[i], window_width, window_height);
+
+    y_offset += window_height + GAP_SIZE;
+  }
 }

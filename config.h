@@ -1,13 +1,18 @@
 #ifndef WM_CONFIG_H
 #define WM_CONFIG_H
 
-#include <stdint.h>
+#define MOD_KEY XCB_MOD_MASK_4
 
-#define SCALE_FACTOR 1
+#define GAP_SIZE 32
 
-static uint32_t default_workspace = 1;
-static uint32_t gap_size = 30 * SCALE_FACTOR;
-static uint32_t border_size = 1;
-static uint32_t border_color = 0x000000;
+#define BORDER_SIZE 0
 
-#endif
+#define BORDER_COLOR 0xFFFFFF
+
+#define MAX_WORKSPACES 10
+
+#define DEFAULT_WORKSPACE 1
+
+#define SLOPPY_FOCUS 1
+
+#endif // WM_CONFIG_H

@@ -1,25 +1,25 @@
 wm - window manager
 -------------------
-wm is a tiling window manager
+wm is a dead simple tiling window manager
 
 features
 --------
-- one workspace
 - one layout
 - one screen
+- ten workspaces
 
 requirements
 ------------
 - xcb
 - xcb-util
 - xcb-util-cursor
+- xcb-util-keysyms
 
 installation
 ------------
 - edit config.mk
-- sudo make clean install
+- doas make clean install
 
 todo
 ----
-- workspaces
-- dpi scaling
+- focus keybinds

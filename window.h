@@ -1,35 +1,32 @@
-#ifndef WM_WINDOWS_H__
-#define WM_WINDOWS_H__
+#ifndef WM_WINDOW_H
+#define WM_WINDOW_H
 
-#include <stdint.h>
 #include <xcb/xcb.h>
 
-#define XCB_CONFIG_X_Y (XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y)
-#define XCB_CONFIG_W_H (XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT)
-#define XCB_CONFIG_X_Y_W_H \
-	(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT)
+#define ROOT_MASK (                        \
+    XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | \
+    XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY |   \
+    XCB_EVENT_MASK_STRUCTURE_NOTIFY |      \
+    XCB_EVENT_MASK_FOCUS_CHANGE |          \
+    XCB_EVENT_MASK_KEY_PRESS)
 
-int window_exists(xcb_window_t);
-void window_move(xcb_window_t, int16_t, int16_t);
-void window_resize(xcb_window_t, int16_t, int16_t);
-void window_move_resize(xcb_window_t, int16_t, int16_t, int16_t, int16_t);
-void window_border_width(xcb_window_t, uint32_t);
-void window_border_color(xcb_window_t, uint32_t);
-void window_sloppy_focus(xcb_window_t);
-void window_kill();
+#define CLIENT_MASK (                \
+    XCB_EVENT_MASK_PROPERTY_CHANGE | \
+    XCB_EVENT_MASK_FOCUS_CHANGE)
 
-typedef struct {
-	xcb_window_t *list;
-	size_t size;
-	size_t capacity;
-} windows_t;
+#define MOVEMENT_MASK (XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y)
+#define POSITION_MASK (XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT)
 
-void setup_windows(windows_t *);
-void free_windows(windows_t *);
-void remove_from_windows(windows_t *, xcb_window_t);
-void add_to_windows(windows_t *, xcb_window_t);
+void window_move(unsigned int, uint16_t, uint16_t);
+void window_resize(unsigned int, uint16_t, uint16_t);
+void window_set_sloppy_focus(unsigned int);
+void window_set_border_size(unsigned int);
+void window_set_border_color(unsigned int);
+void window_kill_focus(void);
+unsigned int window_exists(unsigned int);
+xcb_get_geometry_reply_t *window_get_geometry(unsigned int);
 
 extern xcb_connection_t *conn;
 extern xcb_screen_t *screen;
 
-#endif
+#endif // WM_WINDOW_H
