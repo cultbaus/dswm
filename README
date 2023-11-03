@@ -1,6 +1,6 @@
-wm - window manager
--------------------
-wm is a dead simple tiling window manager
+dswm - window manager
+---------------------
+dswm is a dead simple (tiling) window manager
 
 features
 --------
@@ -19,3 +19,8 @@ installation
 ------------
 - edit config.mk
 - doas make clean install
+
+configure
+---------
+- edit keybindings in wm.h
+- edit options in config.h
