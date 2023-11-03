@@ -1,8 +1,8 @@
 #include "wm.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <unistd.h>
+
 #include <xcb/xcb_keysyms.h>
 
 xcb_key_symbols_t *keysyms;
@@ -10,7 +10,7 @@ xcb_connection_t *conn;
 xcb_screen_t *screen;
 
 static void window_manager_start(WindowManager *);
-static void window_manager_initialize(WindowManager *, xcb_connection_t **, xcb_screen_t **);
+static void window_manager_initialize(WindowManager *, xcb_connection_t **, xcb_screen_t **, xcb_key_symbols_t **);
 static void window_manager_destroy(WindowManager *, xcb_connection_t **);
 static void window_manager_event_map(WindowManager *, xcb_generic_event_t *);
 static void window_manager_event_unmap(WindowManager *, xcb_generic_event_t *);
@@ -18,14 +18,12 @@ static void window_manager_event_destroy(WindowManager *, xcb_generic_event_t *)
 static void window_manager_event_enter(WindowManager *, xcb_generic_event_t *);
 static void window_manager_event_key_press(WindowManager *, xcb_generic_event_t *);
 
-static void allocate_keysyms(xcb_key_symbols_t **keysyms);
-
 int
 main(void)
 {
   WindowManager *wm = (WindowManager *)malloc(sizeof(WindowManager));
 
-  window_manager_initialize(wm, &conn, &screen);
+  window_manager_initialize(wm, &conn, &screen, &keysyms);
   window_manager_start(wm);
   window_manager_destroy(wm, &conn);
 }
@@ -64,12 +62,14 @@ window_manager_start(WindowManager *wm)
 }
 
 static void
-window_manager_initialize(WindowManager *wm, xcb_connection_t **conn, xcb_screen_t **screen)
+window_manager_initialize(WindowManager *wm, xcb_connection_t **conn, xcb_screen_t **screen, xcb_key_symbols_t **keysyms)
 {
+  // Initialize connection to X
   *conn = xcb_connect(NULL, NULL);
   if (xcb_connection_has_error(*conn))
     exit(1);
 
+  // Get primary screen
   const xcb_setup_t *setup = xcb_get_setup(*conn);
   if (!setup)
     exit(2);
@@ -77,12 +77,11 @@ window_manager_initialize(WindowManager *wm, xcb_connection_t **conn, xcb_screen
   if (!*screen)
     exit(3);
 
-  allocate_keysyms(&keysyms);
-
+  // Configure key grabs
+  *keysyms = xcb_key_symbols_alloc(*conn);
   for (size_t i = 0; i < sizeof(keys) / sizeof(Key); i++)
   {
-
-    xcb_keycode_t *keycodes = xcb_key_symbols_get_keycode(keysyms, keys[i].keysym);
+    xcb_keycode_t *keycodes = xcb_key_symbols_get_keycode(*keysyms, keys[i].keysym);
     for (xcb_keycode_t *keycode = keycodes; keycode && *keycode != XCB_NO_SYMBOL; keycode++)
     {
       xcb_grab_key(*conn, 0, (*screen)->root, keys[i].mod, *keycode, XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC);
@@ -90,6 +89,7 @@ window_manager_initialize(WindowManager *wm, xcb_connection_t **conn, xcb_screen
     free(keycodes);
   }
 
+  // Initialize workspaces
   wm->current_workspace = DEFAULT_WORKSPACE;
   for (uint_fast8_t i = 0; i < MAX_WORKSPACES; i++)
   {
@@ -105,7 +105,9 @@ window_manager_destroy(WindowManager *wm, xcb_connection_t **conn)
   {
     workspace_destroy(wm->workspaces[i]);
     free(wm->workspaces[i]);
+    wm->workspaces[i] = NULL;
   }
+  free(wm);
 
   if (*conn)
     xcb_disconnect(*conn);
@@ -129,6 +131,8 @@ window_manager_event_map(WindowManager *wm, xcb_generic_event_t *event)
 
   xcb_map_window(conn, e->window);
   xcb_flush(conn);
+
+  workspace_focus(wm->workspaces[wm->current_workspace], e->window);
 }
 
 static void
@@ -150,6 +154,8 @@ window_manager_event_destroy(WindowManager *wm, xcb_generic_event_t *event)
   xcb_unmap_window(conn, e->window);
   xcb_destroy_window(conn, e->window);
   xcb_flush(conn);
+
+  workspace_focus_prev(wm->workspaces[wm->current_workspace]);
 }
 
 static void
@@ -177,12 +183,6 @@ window_manager_event_key_press(WindowManager *wm, xcb_generic_event_t *event)
       break;
     }
   }
-}
-
-static void
-allocate_keysyms(xcb_key_symbols_t **keysyms)
-{
-  *keysyms = xcb_key_symbols_alloc(conn);
 }
 
 void
@@ -232,4 +232,31 @@ void
 window_manager_kill(WindowManager *wm, Arg *arg)
 {
   window_kill_focus();
+}
+
+void
+window_manager_prev(WindowManager *wm, Arg *arg)
+{
+  Workspace *current = wm->workspaces[wm->current_workspace];
+  workspace_focus_prev(current);
+}
+
+void
+window_manager_next(WindowManager *wm, Arg *arg)
+{
+
+  Workspace *current = wm->workspaces[wm->current_workspace];
+  workspace_focus_next(current);
+}
+
+void
+window_manager_spawn(WindowManager *wm, Arg *arg)
+{
+  if (fork() == 0)
+  {
+    if (conn)
+      close(xcb_get_file_descriptor(conn));
+
+    execvp(((char **)arg->v)[0], arg->v);
+  }
 }

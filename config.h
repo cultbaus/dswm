@@ -1,6 +1,10 @@
 #ifndef WM_CONFIG_H
 #define WM_CONFIG_H
 
+#include <stdlib.h>
+
+#define TERMINAL "st"
+
 #define MOD_KEY XCB_MOD_MASK_4
 
 #define GAP_SIZE 32
