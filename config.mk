@@ -1,4 +1,4 @@
-BIN     = wm
+BIN     = dswm
 
 PREFIX  = /usr
 

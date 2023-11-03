@@ -17,7 +17,10 @@ install: $(BIN)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin/
 	cp -f $(BIN) $(DESTDIR)$(PREFIX)/bin/
 
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(BIN)
+
 clean:
 	rm -f $(BIN) $(OBJ)
 
-.PHONY: all clean
+.PHONY: all clean install uninstall
