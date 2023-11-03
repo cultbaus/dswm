@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static unsigned int list_contains(List *, unsigned int);
 static void list_resize(List *);
 
 void
@@ -75,7 +74,7 @@ list_prev(List *list, xcb_window_t win)
   return list->data[list->size - 1];
 }
 
-static unsigned int
+unsigned int
 list_contains(List *list, xcb_window_t win)
 {
   for (unsigned int i = 0; i < list->size; i++)
