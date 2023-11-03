@@ -6,20 +6,16 @@ features
 --------
 - one layout
 - one screen
-- ten workspaces
+- workspaces
+- keybindings
 
 requirements
 ------------
 - xcb
 - xcb-util
-- xcb-util-cursor
 - xcb-util-keysyms
 
 installation
 ------------
 - edit config.mk
 - doas make clean install
-
-todo
-----
-- focus keybinds
