@@ -118,6 +118,9 @@ window_manager_event_map(WindowManager *wm, xcb_generic_event_t *event)
 {
   xcb_map_request_event_t *e = (xcb_map_request_event_t *)event;
 
+  if (!window_exists(e->window))
+    return;
+
   if (SLOPPY_FOCUS)
     window_set_sloppy_focus(e->window);
 
@@ -132,7 +135,8 @@ window_manager_event_map(WindowManager *wm, xcb_generic_event_t *event)
   xcb_map_window(conn, e->window);
   xcb_flush(conn);
 
-  workspace_focus(wm->workspaces[wm->current_workspace], e->window);
+  if (workspace_contains(wm->workspaces[wm->current_workspace], e->window))
+    workspace_focus(wm->workspaces[wm->current_workspace], e->window);
 }
 
 static void
@@ -155,7 +159,11 @@ window_manager_event_destroy(WindowManager *wm, xcb_generic_event_t *event)
   xcb_destroy_window(conn, e->window);
   xcb_flush(conn);
 
-  workspace_focus_prev(wm->workspaces[wm->current_workspace]);
+  if (workspace_contains(wm->workspaces[wm->current_workspace], e->window))
+  {
+    Workspace *current = wm->workspaces[wm->current_workspace];
+    workspace_focus(current, current->windows->data[current->windows->size - 1]);
+  }
 }
 
 static void

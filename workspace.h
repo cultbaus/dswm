@@ -20,6 +20,7 @@ void workspace_unmap_all(Workspace *);
 void workspace_focus(Workspace *, xcb_window_t);
 void workspace_focus_next(Workspace *);
 void workspace_focus_prev(Workspace *);
+unsigned int workspace_contains(Workspace *, xcb_window_t);
 
 extern xcb_connection_t *conn;
 extern xcb_screen_t *screen;

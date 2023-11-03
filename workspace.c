@@ -93,6 +93,15 @@ workspace_focus_prev(Workspace *ws)
   workspace_focus(ws, prev);
 }
 
+unsigned int
+workspace_contains(Workspace *ws, xcb_window_t win)
+{
+  for (unsigned int i = 0; i < ws->windows->size; i++)
+    if (ws->windows->data[i] == win)
+      return 1;
+  return 0;
+}
+
 static unsigned int
 workspace_contains_primary(Workspace *ws)
 {
