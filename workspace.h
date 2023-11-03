@@ -7,7 +7,7 @@
 
 typedef struct Workspace
 {
-  int focus;
+  xcb_window_t focus;
   List *windows;
 } Workspace;
 
@@ -17,6 +17,9 @@ void workspace_add(Workspace *, xcb_window_t);
 void workspace_remove(Workspace *, xcb_window_t);
 void workspace_map_all(Workspace *);
 void workspace_unmap_all(Workspace *);
+void workspace_focus(Workspace *, xcb_window_t);
+void workspace_focus_next(Workspace *);
+void workspace_focus_prev(Workspace *);
 
 extern xcb_connection_t *conn;
 extern xcb_screen_t *screen;

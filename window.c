@@ -45,9 +45,18 @@ window_kill_focus(void)
   xcb_get_input_focus_reply_t *reply = xcb_get_input_focus_reply(conn, cookie, NULL);
   if (reply)
   {
+    xcb_kill_client(conn, reply->focus);
     xcb_destroy_window(conn, reply->focus);
     xcb_flush(conn);
+    free(reply);
   }
+}
+
+void
+window_set_focus(unsigned int win)
+{
+  xcb_set_input_focus(conn, XCB_INPUT_FOCUS_POINTER_ROOT, win, XCB_CURRENT_TIME);
+  xcb_flush(conn);
 }
 
 unsigned int

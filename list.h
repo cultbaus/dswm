@@ -14,6 +14,8 @@ void list_initialize(List *);
 void list_destroy(List *);
 void list_add(List *, xcb_window_t);
 void list_remove(List *, xcb_window_t);
+xcb_window_t list_next(List *, xcb_window_t);
+xcb_window_t list_prev(List *, xcb_window_t);
 
 extern xcb_connection_t *conn;
 extern xcb_screen_t *screen;

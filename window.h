@@ -17,12 +17,13 @@
 #define MOVEMENT_MASK (XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y)
 #define POSITION_MASK (XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT)
 
-void window_move(unsigned int, uint16_t, uint16_t);
-void window_resize(unsigned int, uint16_t, uint16_t);
+void window_move(xcb_window_t, uint16_t, uint16_t);
+void window_resize(xcb_window_t, uint16_t, uint16_t);
 void window_set_sloppy_focus(unsigned int);
 void window_set_border_size(unsigned int);
 void window_set_border_color(unsigned int);
 void window_kill_focus(void);
+void window_set_focus(unsigned int);
 unsigned int window_exists(unsigned int);
 xcb_get_geometry_reply_t *window_get_geometry(unsigned int);
 

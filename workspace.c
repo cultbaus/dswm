@@ -2,19 +2,17 @@
 
 #include <stdlib.h>
 
-// clang-format off
 static unsigned int workspace_contains_primary(Workspace *);
 static unsigned int workspace_should_resize_primary(Workspace *);
 static unsigned int workspace_should_reposition_primary(Workspace *);
-static void         workspace_resize_primary(Workspace *);
+static void workspace_resize_primary(Workspace *);
 static unsigned int workspace_contains_secondaries(Workspace *);
-static void         workspace_resize_secondaries(Workspace *);
-// clang-format on
+static void workspace_resize_secondaries(Workspace *);
 
 void
 workspace_initialize(Workspace *ws)
 {
-  ws->focus = -1;
+  ws->focus = XCB_NONE;
   ws->windows = malloc(sizeof(List));
   list_initialize(ws->windows);
 }
@@ -27,7 +25,7 @@ workspace_destroy(Workspace *ws)
 }
 
 void
-workspace_add(Workspace *ws, unsigned int win)
+workspace_add(Workspace *ws, xcb_window_t win)
 {
   list_add(ws->windows, win);
 
@@ -35,10 +33,12 @@ workspace_add(Workspace *ws, unsigned int win)
     workspace_resize_primary(ws);
 
   workspace_resize_secondaries(ws);
+
+  ws->focus = win;
 }
 
 void
-workspace_remove(Workspace *ws, unsigned int win)
+workspace_remove(Workspace *ws, xcb_window_t win)
 {
   list_remove(ws->windows, win);
 
@@ -66,6 +66,33 @@ workspace_unmap_all(Workspace *ws)
   xcb_flush(conn);
 }
 
+void
+workspace_focus(Workspace *ws, xcb_window_t win)
+{
+  window_set_focus(win);
+  ws->focus = win;
+}
+
+void
+workspace_focus_next(Workspace *ws)
+{
+  if (ws->windows->size == 1)
+    return;
+
+  xcb_window_t next = list_next(ws->windows, ws->focus);
+  workspace_focus(ws, next);
+}
+
+void
+workspace_focus_prev(Workspace *ws)
+{
+  if (ws->windows->size < 1)
+    return;
+
+  xcb_window_t prev = list_prev(ws->windows, ws->focus);
+  workspace_focus(ws, prev);
+}
+
 static unsigned int
 workspace_contains_primary(Workspace *ws)
 {
@@ -90,7 +117,7 @@ workspace_resize_primary(Workspace *ws)
 static unsigned int
 workspace_should_resize_primary(Workspace *ws)
 {
-  return ws->windows->size <= 2 && ws->windows->size >= 1 ? 1 : 0;
+  return ws->windows->size >= 1 ? 1 : 0;
 }
 
 static unsigned int

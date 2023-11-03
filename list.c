@@ -25,7 +25,7 @@ list_destroy(List *list)
 }
 
 void
-list_add(List *list, unsigned int win)
+list_add(List *list, xcb_window_t win)
 {
   if (list_contains(list, win))
     return;
@@ -37,7 +37,7 @@ list_add(List *list, unsigned int win)
 }
 
 void
-list_remove(List *list, unsigned int win)
+list_remove(List *list, xcb_window_t win)
 {
   for (unsigned int i = 0; i < list->size; i++)
   {
@@ -45,7 +45,7 @@ list_remove(List *list, unsigned int win)
     {
       if (i < list->size - 1)
       {
-        memmove(&list->data[i], &list->data[i + 1], (list->size - i - 1) * sizeof(unsigned int));
+        memmove(&list->data[i], &list->data[i + 1], (list->size - i - 1) * sizeof(xcb_window_t));
       }
       list->size--;
       return;
@@ -53,8 +53,30 @@ list_remove(List *list, unsigned int win)
   }
 }
 
+xcb_window_t
+list_next(List *list, xcb_window_t win)
+{
+  for (unsigned int i = 0; i < list->size; i++)
+  {
+    if (list->data[i] == win && i < list->size - 1)
+      return list->data[i + 1];
+  }
+  return list->data[0];
+}
+
+xcb_window_t
+list_prev(List *list, xcb_window_t win)
+{
+  for (unsigned int i = 0; i < list->size; i++)
+  {
+    if (list->data[i] == win && i >= 1)
+      return list->data[i - 1];
+  }
+  return list->data[list->size - 1];
+}
+
 static unsigned int
-list_contains(List *list, unsigned int win)
+list_contains(List *list, xcb_window_t win)
 {
   for (unsigned int i = 0; i < list->size; i++)
   {
