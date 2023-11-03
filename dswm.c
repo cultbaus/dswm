@@ -1,4 +1,4 @@
-#include "wm.h"
+#include "dswm.h"
 
 #include <stdlib.h>
 #include <unistd.h>
