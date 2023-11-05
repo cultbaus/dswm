@@ -7,7 +7,7 @@
 
 #define MOD_KEY XCB_MOD_MASK_4
 
-#define GAP_SIZE 32
+#define GAP_SIZE 15
 
 #define BORDER_SIZE 0
 

@@ -1,6 +1,7 @@
 #include "dswm.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <xcb/xcb_keysyms.h>
@@ -88,6 +89,14 @@ window_manager_initialize(WindowManager *wm, xcb_connection_t **conn, xcb_screen
     }
     free(keycodes);
   }
+
+  xcb_font_t font = xcb_generate_id(*conn);
+  xcb_cursor_t cursor = xcb_generate_id(*conn);
+
+  xcb_open_font(*conn, font, strlen("cursor"), "cursor");
+  xcb_create_glyph_cursor(*conn, cursor, font, font, 68, 68 + 1, 65535, 65535, 65535, 0, 0, 0);
+
+  xcb_change_window_attributes(*conn, (*screen)->root, XCB_CW_CURSOR, &cursor);
 
   // Initialize workspaces
   wm->current_workspace = DEFAULT_WORKSPACE;
@@ -260,11 +269,11 @@ window_manager_next(WindowManager *wm, Arg *arg)
 void
 window_manager_spawn(WindowManager *wm, Arg *arg)
 {
-  if (fork() == 0)
-  {
-    if (conn)
-      close(xcb_get_file_descriptor(conn));
+  if (fork())
+    return;
 
-    execvp(((char **)arg->v)[0], arg->v);
-  }
+  if (conn)
+    close(xcb_get_file_descriptor(conn));
+
+  execvp(((char **)arg->v)[0], arg->v);
 }
